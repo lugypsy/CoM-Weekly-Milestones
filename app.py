@@ -1,4 +1,3 @@
-
 import streamlit as st
 import random
 
@@ -251,46 +250,40 @@ st.markdown("## 🛌 Lazy Mayor’s Milestone Tool")
 city_level = st.number_input("What's your city level?", min_value=1, max_value=99, value=30)
 
 def allowed_for_level(req, level):
-    if req == "all":
-        return True
-    if req == "30-99":
-        return level >= 30
-    if req == "15-29":
-        return 15 <= level <= 29
-    if req == "11-14":
-        return 11 <= level <= 14
+    if req == "all": return True
+    if req == "30-99": return level >= 30
+    if req == "15-29": return 15 <= level <= 29
+    if req == "11-14": return 11 <= level <= 14
     return False
 
 # --------------------
 # Filtered Milestones
 # --------------------
-filtered = [m for m in milestones if allowed_for_level(m["Level"], city_level)]
+filtered = [m for m in milestones if allowed_for_level(m['Level'], city_level)]
 
 # --------------------
 # State Handling
 # --------------------
-if "full" not in st.session_state:
-    st.session_state.full = [None]*10
-if "partial" not in st.session_state:
-    st.session_state.partial = [None]*5
+if 'full' not in st.session_state: st.session_state.full = [None]*10
+if 'partial' not in st.session_state: st.session_state.partial = [None]*5
 
 def clear_full(): st.session_state.full = [None]*10
 def clear_partial(): st.session_state.partial = [None]*5
 
 def randomize(section, count, avoid_cats):
-    pool = [m for m in filtered if m["Category"] not in avoid_cats]
+    pool = [m for m in filtered if m['Category'] not in avoid_cats]
     selected = random.sample(pool, min(count, len(pool)))
-    return [m["Category"] for m in selected]
+    return [m['Category'] for m in selected]
 
 def get_name(cat):
     for m in filtered:
-        if m["Category"] == cat:
-            return m["Milestone"]
-    return "—"
+        if m['Category'] == cat:
+            return m['Milestone']
+    return '—'
 
 def get_milestone(cat):
     for m in filtered:
-        if m["Category"] == cat:
+        if m['Category'] == cat:
             return m
     return None
 
@@ -299,14 +292,12 @@ def get_milestone(cat):
 # --------------------
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("🔴 Clear Full Milestones"):
-        clear_full()
+    if st.button("🔴 Clear Full Milestones"): clear_full()
     if st.button("🎲 Randomize Full"):
         used = set(st.session_state.partial)
         st.session_state.full = randomize("full", 10, avoid_cats=used)
 with col2:
-    if st.button("🔴 Clear Partial Milestones"):
-        clear_partial()
+    if st.button("🔴 Clear Partial Milestones"): clear_partial()
     if st.button("🎲 Randomize Partial"):
         used = set(st.session_state.full)
         st.session_state.partial = randomize("partial", 5, avoid_cats=used)
@@ -316,45 +307,35 @@ with col2:
 # --------------------
 st.markdown("### ✅ Pick 10 Full Milestones (Phases 1 + 2 + 3)")
 used_categories = set()
-
 for i in range(10):
     current = st.session_state.full[i]
-    options = ["—"] + [m["Category"] for m in filtered if m["Category"] not in used_categories or m["Category"] == current]
-    if current in options:
-        index = options.index(current)
-    else:
-        index = 0
-    choice = st.selectbox(f"Full #{{i+1}}", options=options, format_func=get_name, index=index, key=f"full_{{i}}")
-    st.session_state.full[i] = choice if choice != "—" else None
-    if choice and choice != "—":
-        used_categories.add(choice)
+    options = ['—'] + [m['Category'] for m in filtered if m['Category'] not in used_categories or m['Category'] == current]
+    index = options.index(current) if current in options else 0
+    choice = st.selectbox(f"Full #{i+1}", options=options, format_func=get_name, index=index, key=f"full_{i}")
+    st.session_state.full[i] = choice if choice != '—' else None
+    if choice and choice != '—': used_categories.add(choice)
 
 # --------------------
 # Partial Milestones
 # --------------------
 st.markdown("### 🟡 Pick 5 Partial Milestones (Phases 1 + 2 only)")
-
 for i in range(5):
     current = st.session_state.partial[i]
-    options = ["—"] + [m["Category"] for m in filtered if m["Category"] not in used_categories or m["Category"] == current]
-    if current in options:
-        index = options.index(current)
-    else:
-        index = 0
-    choice = st.selectbox(f"Partial #{{i+1}}", options=options, format_func=get_name, index=index, key=f"partial_{{i}}")
-    st.session_state.partial[i] = choice if choice != "—" else None
-    if choice and choice != "—":
-        used_categories.add(choice)
+    options = ['—'] + [m['Category'] for m in filtered if m['Category'] not in used_categories or m['Category'] == current]
+    index = options.index(current) if current in options else 0
+    choice = st.selectbox(f"Partial #{i+1}", options=options, format_func=get_name, index=index, key=f"partial_{i}")
+    st.session_state.partial[i] = choice if choice != '—' else None
+    if choice and choice != '—': used_categories.add(choice)
 
 # --------------------
 # Scoring Summary
 # --------------------
-full_points = sum(get_milestone(cat)["Total"] for cat in st.session_state.full if cat and get_milestone(cat))
-partial_points = sum(get_milestone(cat)["Phase 1+2"] for cat in st.session_state.partial if cat and get_milestone(cat))
+full_points = sum(get_milestone(cat)['Total'] for cat in st.session_state.full if cat and get_milestone(cat))
+partial_points = sum(get_milestone(cat)['Phase 1+2'] for cat in st.session_state.partial if cat and get_milestone(cat))
 grand_total = full_points + partial_points
 
 st.markdown("### 📊 Live Scoring Summary")
 st.markdown("🧮 Total Points:")
-st.markdown(f"- Full Milestones: **{{full_points:,}}**")
-st.markdown(f"- Partial Milestones: **{{partial_points:,}}**")
-st.markdown(f"🎯 Grand Total: **{{grand_total:,}}**")
+st.markdown(f"- Full Milestones: **{full_points:,}**")
+st.markdown(f"- Partial Milestones: **{partial_points:,}**")
+st.markdown(f"🎯 Grand Total: **{grand_total:,}**")
